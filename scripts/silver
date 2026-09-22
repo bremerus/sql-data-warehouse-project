@@ -1,1 +1,288 @@
 
+-- crm_cust_info cleaning
+
+insert into silver.crm_cust_info(
+	cst_id,
+	cst_key,
+	cst_firstname,
+	cst_lastname,
+	cst_marital_status,
+	cst_gndr,
+	cst_create_date)
+select
+	cst_id,
+	cst_key,
+	trim(cst_firstname) as cst_firstname,
+	trim(cst_lastname) as cst_lastname,
+	case 
+		when upper(trim(cst_marital_status)) = 'S' then 'Single'
+		when upper(trim(cst_marital_status)) = 'M' then 'Married'
+		else 'n/a'
+	end as cst_marital_status,
+	case 
+		when upper(trim(cst_gndr)) = 'F' then 'Female'
+		when upper(trim(cst_gndr)) = 'M' then 'Male'
+		else 'n/a'
+	end as cst_gndr,
+	cst_create_date
+from  (
+select
+*,
+row_number() over(partition by cst_id order by cst_create_date desc) as flag_last
+from bronze.crm_cust_info
+where cst_id is not null
+)t 
+where flag_last = 1 
+
+
+-- crm_prd_info cleaning
+insert into silver.crm_prd_info(
+	prd_id,
+	cat_id,
+	prd_key,
+	prd_nm,
+	prd_cost,
+	prd_line,
+	prd_start_dt,
+	prd_end_dt
+)
+select
+	prd_id,
+	replace(substring(prd_key, 1, 5) , '-', '_') as cat_id,
+	substring(prd_key, 7, len(prd_key)) as prd_key,
+	prd_nm,
+	coalesce(prd_cost, 0) as prd_cost,
+	case upper(trim(prd_line))
+		when 'M' then 'Mountain'
+		when 'R' then 'Road'
+		when 'S' then 'Other Sales'
+		when 'T' then 'Touring'
+		else 'n/a'
+	end as prd_line,
+	cast (prd_start_dt as date) as prd_start_dt,
+	cast(lead(prd_start_dt) over(partition by prd_key order by prd_id) -1  as date) as prd_end_dt
+from bronze.crm_prd_info
+
+-- crm_sales_details cleaning
+
+select
+	sls_ord_num,
+	sls_prd_key,
+	sls_cust_id,
+	case
+		when sls_order_dt < = 0 or len(sls_order_dt) != 8 or sls_order_dt < 19000101 or sls_order_dt > 20500101 then null
+		else cast(cast(sls_order_dt as varchar) as date)
+	end as sls_order_dt,
+	case
+		when sls_ship_dt < = 0 or len(sls_ship_dt) != 8 or sls_ship_dt < 19000101 or sls_ship_dt > 20500101 then null
+		else cast(cast(sls_ship_dt as varchar) as date)
+	end as sls_ship_dt,
+	case
+		when sls_due_dt < = 0 or len(sls_due_dt) != 8 or sls_due_dt < 19000101 or sls_due_dt > 20500101 then null
+		else cast(cast(sls_due_dt as varchar) as date)
+	end as sls_due_dt,
+	case
+		when sls_sales != sls_quantity * abs(sls_price) or sls_sales < = 0 or sls_sales is null then sls_quantity * abs(sls_price)
+		else sls_sales 
+	end as sls_sales,
+	sls_quantity,
+	case
+		when sls_price is null or sls_price <= 0 then sls_sales / nullif(sls_quantity, 0)
+		else sls_price 
+	end as sls_price
+from bronze.crm_sales_details
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+IF OBJECT_ID('silver.crm_cust_info', 'U') is not null
+    DROP TABLE silver.crm_cust_info;
+
+CREATE TABLE silver.crm_cust_info (
+    cst_id              INT,
+    cst_key             NVARCHAR(50),
+    cst_firstname       NVARCHAR(50),
+    cst_lastname        NVARCHAR(50),
+    cst_marital_status  NVARCHAR(50),
+    cst_gndr            NVARCHAR(50),
+    cst_create_date     DATE,
+	dwh_create_date datetime2 default getdate()
+);
+go
+
+if object_id ('silver.crm_prd_info', 'U') is not null
+	drop table silver.crm_prd_info;
+
+go
+
+create table silver.crm_prd_info(
+	prd_id int,
+	cat_id nvarchar(50),
+	prd_key nvarchar(50),
+	prd_nm nvarchar(50),
+	prd_cost int,
+	prd_line nvarchar(50),
+	prd_start_dt date,
+	prd_end_dt date,
+	dwh_create_date datetime2 default getdate()
+);
+
+go
+
+if object_id ('silver.crm_sales_details', 'U') is not null
+	drop table silver.crm_sales_details;
+create table silver.crm_sales_details(
+	sls_ord_num nvarchar(50),
+	sls_prd_key nvarchar(50),
+	sls_cust_id int,
+	sls_order_dt date,
+	sls_ship_dt date,
+	sls_due_dt date,
+	sls_sales int,
+	sls_quantity int,
+	sls_price int,
+	dwh_create_date datetime2 default getdate()
+);
+
+go
+
+if object_id ('silver.erp_cust_az12', 'U') is not null
+	drop table silver.erp_cust_az12;
+create table silver.erp_cust_az12(
+	cid nvarchar(50),
+	bdate date,
+	gen varchar(50),
+	dwh_create_date datetime2 default getdate()
+);
+
+go
+
+if object_id ('silver.erp_loc_a101', 'U') is not null
+	drop table silver.erp_loc_a101;
+create table silver.erp_loc_a101(
+	cid nvarchar(50),
+	cntry nvarchar(50),
+	dwh_create_date datetime2 default getdate()
+);
+
+go
+
+if object_id ('silver.px_cat_g1v2', 'U') is not null
+	drop table silver.px_cat_g1v2;
+create table silver.px_cat_g1v2(
+	id nvarchar(50),
+	cat nvarchar(50),
+	subcat nvarchar(50),
+	maintenance nvarchar(50),
+	dwh_create_date datetime2 default getdate()
+);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+select
+	case
+		when cid like 'NAS%' then substring(cid, 4, len(cid))
+		else cid
+	end as cid,
+	bdate,
+	gen
+from bronze.erp_cust_az12
+where case
+		when cid like 'NAS%' then substring(cid, 4, len(cid))
+		else cid
+	end not in (select cst_key from silver.crm_cust_info)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+--quality checks 
+
+select
+	*
+from silver.crm_sales_details
+where sls_ord_num != trim(sls_ord_num)
+
+
+select
+	nullif(sls_due_dt, 0)
+from silver.crm_sales_details
+where sls_due_dt < = 0 or 
+len(sls_due_dt) != 8 or 
+sls_due_dt < 1900-01-01 or
+sls_due_dt > 20500101
+
+
+
+select
+	*
+from bronze.crm_sales_details
+where sls_order_dt > sls_ship_dt or sls_order_dt > sls_due_dt or sls_ship_dt > sls_due_dt
+
+
+select distinct
+	sls_sales as old_sls_sales,
+	sls_quantity,
+	sls_price as old_sls_price
+from silver.crm_sales_details
+where sls_sales != sls_quantity * sls_price
+or sls_sales is null or sls_quantity is null or sls_price is null 
+or sls_sales <=0 or sls_quantity <=0 or sls_price <=0 
+order by sls_sales, sls_quantity, sls_price
