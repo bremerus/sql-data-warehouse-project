@@ -14,9 +14,9 @@ This gold layer is built to provide buisness ready data for analysing. It contai
 | customer_number  | Nvarchar(50)  |A unique key it's basicly AW000 + customer_id (eg. AW00011001)                                 |
 | first_name       | Nvarchar(50)  |Name of the customer                                                                           |
 | last_name        | Nvarchar(50)  |Last name of the customer                                                                      |
-| country          | NVARCHAR(50)  | Country of the customer (e.g., 'Greece').                                                 |
-| marital_status   | NVARCHAR(50)  | Marital status of the customer (e.g., 'Married', 'Single').                              |
-| gender           | NVARCHAR(50)  | Gender of the customer (e.g., 'Male', 'Female', 'n/a').                                      |
+| country          | NVARCHAR(50)  | Country of the customer (e.g., 'Greece').                                                     |
+| marital_status   | NVARCHAR(50)  | Marital status of the customer (e.g., 'Married', 'Single').                                   |
+| gender           | NVARCHAR(50)  | Gender of the customer (e.g., 'Male', 'Female', 'n/a').                                       |
 | birthdate        | DATE          | Date of birth of the customer, presented as YYYY-MM-DD (e.g., 1971-10-06).                    |
 | create_date      | DATE          | The date and time when the customer record was created in the system                          |                    
 
@@ -38,6 +38,8 @@ This gold layer is built to provide buisness ready data for analysing. It contai
 |cost | INT | Base price or cost of the product in monetary units.|
 |product_line | NVARCHAR(50) | Specific series or line the product belongs to, such as Road or Mountain.|
 |start_date | DATE | Date when the product became available for sale or use.|
+
+---
 
 ### 3. **gold.fact_sales**
   - **Perpuse:** Provides all the usefull reachable data for sales.
