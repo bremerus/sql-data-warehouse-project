@@ -18,6 +18,11 @@ Usage:
 */
 
 --gold.dim_customers
+/*
+In this gold View as well as the rest we aim to improve the visualization throught renaming into a more convinient way.
+Also I implemented a priority regarding the data sources for the gender.
+Finally I gathered all the usefull data regarding the customers from all the relating tables.
+*/
 
 if object_id('gold.dim_customers', 'V') is not null
 	drop view gold.dim_customers;
@@ -46,6 +51,11 @@ left join silver.erp_loc_a101 as la
 	on ci.cst_key = la.cid
 
 --gold.dim_products
+/*
+In this occasion I mainly sticked to renaming the collumns but also filtering out old and un related 
+data, for instance prices the are no longer current. This view has all the available information for 
+the products.
+*/
   
 if object_id('gold.dim_products', 'V') is not null
 	drop view gold.dim_products;
