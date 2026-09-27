@@ -187,7 +187,7 @@ begin
 			case 
 				when gen is null or trim(gen) = '' then 'n/a'
 				when upper(trim(gen)) in ('F', 'FEMALE') then 'Female'
-				when upper(trim(gen)) in ('M', 'MALE') then 'Μale'
+				when upper(trim(gen)) in ('M', 'MALE') then 'Male'
 				else gen 
 			end as gen
 		from bronze.erp_cust_az12
